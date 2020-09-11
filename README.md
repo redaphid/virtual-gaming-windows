@@ -22,6 +22,10 @@ Here is my hardware and software configuration at the moment
   - **PSU:** EVGA 600 BQ 80+ Bronze Semi Modular Power Supply
 
 ##### Software
+  - **BIOS/UEFI Info:** 
+    * BIOS Version P2.90 (2019/11/28) 
+    * AGESA Combo-AM4 1.0.0.4
+    * Revision 5.14
   - **Host OS:** Arch Linux x86_64
   - **Kernel:** 5.8.7-zen1-1-zen
   - **qemu:** 5.1.0-1
@@ -46,10 +50,10 @@ Next is ensuring that the IOMMU groups are valid. On the wiki is a script to che
 ```sh
 ...
 IOMMU Group 13:
-	06:00.0 VGA compatible controller [0300]: NVIDIA Corporation TU104 [GeForce RTX 2060] [10de:1e89] (rev a1)
-	06:00.1 Audio device [0403]: NVIDIA Corporation TU104 HD Audio Controller [10de:10f8] (rev a1)
-	06:00.2 USB controller [0c03]: NVIDIA Corporation TU104 USB 3.1 Host Controller [10de:1ad8] (rev a1)
-	06:00.3 Serial bus controller [0c80]: NVIDIA Corporation TU104 USB Type-C UCSI Controller [10de:1ad9] (rev a1)
+  06:00.0 VGA compatible controller [0300]: NVIDIA Corporation TU104 [GeForce RTX 2060] [10de:1e89] (rev a1)
+  06:00.1 Audio device [0403]: NVIDIA Corporation TU104 HD Audio Controller [10de:10f8] (rev a1)
+  06:00.2 USB controller [0c03]: NVIDIA Corporation TU104 USB 3.1 Host Controller [10de:1ad8] (rev a1)
+  06:00.3 Serial bus controller [0c80]: NVIDIA Corporation TU104 USB Type-C UCSI Controller [10de:1ad9] (rev a1)
 ...
 ```
 I therefore must pass everything in group 13 together to the VM, that is, the VGA controller (GPU), audio controller, USB controller and serial bus controller. The set of devices vary between graphics card. Your setup will be similar to this is you are on Turing (RTX 20xx) but with Pascal (GTX 10xx) you will most likely have only the GPU and the audio controller. Whatever the case, take note of the bus addresses of all the devices within the same IOMMU group as your GPU (in this case 06:00.0 to 06:00.3).
