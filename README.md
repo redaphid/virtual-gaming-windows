@@ -249,56 +249,139 @@ The output should be the mode the CPU is running on i.e. "performance".
  ## VM Optimization Tweaks/Settings
  These are additional settings on the VM for performance improvement. They are all available on [win10.xml](https://gitlab.com/Karuri/vfio/-/blob/master/win10.xml).
 
-#### CPU Pinning
+### CPU Pinning
 CPU pinning is an important step in optimizing CPU performance for VMs on multithreaded CPUs.
 
-The rule of the thumb is to pass to the virtual machine cores that are as close to each other as possible so as to minimize latency. When you passthrough a core you typically want to include its sibling. There isn't a one-size-fits-all solution here since the topology varies from CPU to CPU. You should **NOT** copy-paste a solution you found somewhere (this included) and then use it for your setup. The package *hwloc* can visually show you the topology of your CPU and go a long way in aiding you choose the right cores to pin. Simply run the following command once you have the pacakage installed
+The rule of the thumb is to pass to the virtual machine cores that are as close to each other as possible so as to minimize latency. When you passthrough a virtual core you typically want to include its sibling. There isn't a one-size-fits-all solution here since the topology varies from CPU to CPU. You should therefore **NOT** copy a solution you found somewhere (mine included) and then just use it for your setup. 
+
+There are two tools that can assist you in choosing the right cores to map. One is a quick solution that will generate a configuration for you to use and the other gives you information to enable you to pick a sensible configuration for yourself. 
+
+#### Tool 1: CPU Pinning Helper (quick, autogenerates config for you)
+The CPU Pinning Helper will choose the right cores for you pretty quick. They have a web tool you can use from the browser and an API you can use from terminal.
+
+##### API Method
+To use the API simply run the following command, substituting *$CORES* with the number of cores you've assigned your vm:
+```sh
+$ curl -X POST -F "vcpu=$CORES" -F "lscpu=`lscpu -p`" https://passthroughtools.org/api/v1/cpupin/
+```
+I'm assigning mine 8 cores, so this is my command:
+```sh
+$ curl -X POST -F "vcpu=8" -F "lscpu=`lscpu -p`" https://passthroughtools.org/api/v1/cpupin/
+```
+##### Web Method
+Open their web tool by visiting [this link](https://passthroughtools.org/cpupin/). In the first field enter the number of cores you'll be assigning the VM. In the text box below it paste the output of running "lscpu -p" on your host machine. Click **Submit** to have an optimal pinning configuration generated for you.
+[![2020-09-12-20-25.png](https://i.postimg.cc/pXZ3FQJm/2020-09-12-20-25.png)](https://postimg.cc/RNWPrH8m)
+
+Both methods should produce the same results. This is the configuration generated for my setup:
+```
+  <vcpu placement='static'>8</vcpu>
+  <cputune>
+    <vcpupin vcpu='0' cpuset='2'/>
+    <vcpupin vcpu='1' cpuset='8'/>
+    <vcpupin vcpu='2' cpuset='3'/>
+    <vcpupin vcpu='3' cpuset='9'/>
+    <vcpupin vcpu='4' cpuset='4'/>
+    <vcpupin vcpu='5' cpuset='10'/>
+    <vcpupin vcpu='6' cpuset='5'/>
+    <vcpupin vcpu='7' cpuset='11'/>
+  </cputune>
+  <cpu mode='host-passthrough' check='none'>
+    <topology sockets='1' cores='4' threads='2'/>
+    <cache mode='passthrough'/>
+  </cpu>
+```
+Copy the configuration and add it to your VM's XML file. That is it.I recommend you still go through the second tool for a more in-depth understanding of what is going on here. However, you don't have to :-)
+
+#### Tool 2: hwloc (for a more in-depth understanding)
+The package *hwloc* can visually show you the topology of your CPU. Run the following command once you've installed it:
 ```sh
 $ lstopo
 ```
-This is the topology for my CPU:
+This is the topology for my CPU as produced by the command above:
 [![2020-09-10-02-27.png](https://i.postimg.cc/T35z2v38/2020-09-10-02-27.png)](https://postimg.cc/75DsXczX)
+The format above can be a bit confusing due to the default display mode of the indexes. Toggle the display mode using **i** until the legend (at the bottom) shows "Indexes: Physical". The layout should become more clear. In my case it becomes this:
+[![2020-09-12-17-25.png](https://i.postimg.cc/bNR7T5Zp/2020-09-12-17-25.png)](https://postimg.cc/WhhYpXmH)
 
-To explain a little bit, I have 6 physical cores (Core L#0 to L#5) and 12 virtual cores (PU L#0 to PU L#11). The 6 physical cores are majorly split into groups of 3, each group sharing L3 (level 3) cache. The groups are core L#0 to L#2 and core L#3 to L#5. Each pair of virtual cores within the physical one are the *siblings* e.g. 
-- PU L#0 and PU L#1
-- PU L#2 and PU L#3
-- PU L#6 and PU L#7
+To explain a little bit, I have 6 physical cores (Core P#0 to P#6) and 12 virtual cores (PU P#0 to PU P#11). The 6 physical cores are mainly divided into two sets of 3 cores: Core P#0 to P#2; and Core P#4 to P#6. Each group has its own L3 cache. However, the most important thing to pay attention here is how virtual cores are mapped to the physical core. The virtual cores (notated PU P#...) come in pairs of two i.e. *siblings*: 
+- PU P#0 and PU P#6 are siblings in Core P#0
+- PU P#1 and PU P#7 are siblings in Core P#1
+- PU P#2 and PU P#8 are siblings in Core P#3
 
-For my setup I'm passing through 4 physical cores (8 virtual cores). Following the topology of my CPU I decided to allocate all the virtual cores on the left side and one pair from the right. If instead I had a 8c/16t processor with the cores split 4-4 instead I would allocate the cores on one side only and not have to deal with the latency penalty of jumping from CCX to CCX. This would also have been the case if I was only passing through 3c/6t. Read more on CPU pinning [here](https://github.com/bryansteiner/gpu-passthrough-tutorial#----cpu-pinning).
+When pinning CPUs you should map siblings that are adjacent to each other. Lets check what cores the CPU Pinning Helper (above) decided to pin. 
+[![2020-09-12-20-57.png](https://i.postimg.cc/ZYH5TMDg/2020-09-12-20-57.png)](https://postimg.cc/MXcS5dwb)
 
-Here is my CPU pinning setup:
+It chose all the cores on the right and a pair from the left. The pair on the left that it chose are the cores most adjacent to the cores on the right.I could, however, decide to allocate all the cores on the left side and a pair from the right which is most adjacent left-side cores:
+[![2020-09-12-21-01.png](https://i.postimg.cc/zfYyLRwP/2020-09-12-21-01.png)](https://postimg.cc/0zZkFjBp)
+
+Here is the pinning  based on my "left-to-right" configuration as opposed to the Pinning Helper's "right-to-left":
 ```
-  ...
   <vcpu placement="static">8</vcpu>
-  <iothreads>4</iothreads>
   <cputune>
     <vcpupin vcpu="0" cpuset="0"/>
-    <vcpupin vcpu="1" cpuset="1"/>
-    <vcpupin vcpu="2" cpuset="2"/>
-    <vcpupin vcpu="3" cpuset="3"/>
-    <vcpupin vcpu="4" cpuset="4"/>
-    <vcpupin vcpu="5" cpuset="5"/>
-    <vcpupin vcpu="6" cpuset="6"/>
-    <vcpupin vcpu="7" cpuset="7"/>
-    <emulatorpin cpuset="0,3"/>
-    <iothreadpin iothread="1" cpuset="0-1"/>
-    <iothreadpin iothread="2" cpuset="2-3"/>
-    <iothreadpin iothread="3" cpuset="4-5"/>
-    <iothreadpin iothread="4" cpuset="6-7"/>
+    <vcpupin vcpu="1" cpuset="6"/>
+    <vcpupin vcpu="2" cpuset="1"/>
+    <vcpupin vcpu="3" cpuset="7"/>
+    <vcpupin vcpu="4" cpuset="2"/>
+    <vcpupin vcpu="5" cpuset="8"/>
+    <vcpupin vcpu="6" cpuset="3"/>
+    <vcpupin vcpu="7" cpuset="9"/>
   </cputune>
-  ...
+  <cpu mode='host-passthrough' check='none'>
+    <topology sockets='1' cores='4' threads='2'/>
+    <cache mode='passthrough'/>
+  </cpu>
 ```
-The *iothreads* element specifies the number of threads dedicated to performing block I/O. More information on this [here](https://libvirt.org/formatdomain.html#iothreads-allocation). This means that the other threads assigned to your VM can focus on handling whatever other tasks you are throwing at them instead of bothering themselves with I/O operations. The *iothreadpin* element specifies which of host physical CPUs the IOThreads will be pinned to. 
+Hopefully now you have a clear understanding of the methodology behind CPU pinning. 
+
+#### Iothreads and Iothreadpins
+I build upon CPU pinning using IOthreads and IOthreadpins. According to [documentation](https://libvirt.org/formatdomain.html#iothreads-allocation):
+- *iothreads* specifies the number of threads dedicated to performing block I/O.
+- *iothreadpin* specifies which of host physical CPUs the IOThreads will be pinned to. 
+- *emulatorpin* specifies which of host physical CPUs the "emulator" will be pinned to. 
+
+The Arch Wiki recommends to pin the emulator and iothreads to host cores (if available) rather than the cores assigned to the virtual machine. If you do not intend to be doing any computation-heavy work on the host (or even anything at all) at the same time as you would on the VM, you can to pin your VM threads across all of your cores so that the VM can fully take advantage of the spare CPU time the host has available. However pinning all physical and logical cores of your CPU can potentially induce latency in the guest VM.
+
+For my CPU, which has a total of 12 virtual cores,  8 are already assigned to the guest. Since for my use case I use host for nothing while the guest is running, I decided to use the rest of the 4 remaining cores to for Iothread pinning. If for your use case you'll still be using the host for something else do not exhaust your cores! 
+
+
+Before the *cputune* element add an *iothreads* element. Inside the *cpuelement* body, allocate threadpins for each *iothread* you have defined . Here is my configuration for this:
+```
+  <vcpu placement="static">8</vcpu>
+  <iothreads>2</iothreads>
+  <cputune>
+    <vcpupin vcpu="0" cpuset="0"/>
+    <vcpupin vcpu="1" cpuset="6"/>
+    <vcpupin vcpu="2" cpuset="1"/>
+    <vcpupin vcpu="3" cpuset="7"/>
+    <vcpupin vcpu="4" cpuset="2"/>
+    <vcpupin vcpu="5" cpuset="8"/>
+    <vcpupin vcpu="6" cpuset="3"/>
+    <vcpupin vcpu="7" cpuset="9"/>
+    <emulatorpin cpuset='5-6'/>
+    <iothreadpin iothread="1" cpuset="4-10"/>
+    <iothreadpin iothread="2" cpuset="5-11"/>
+  </cputune>
+  <cpu mode='host-passthrough' check='none'>
+    <topology sockets='1' cores='4' threads='2'/>
+    <cache mode='passthrough'/>
+  </cpu>
+```
+Be careful with this section as you can easily hurt your guest's performance. A safe bet would be not to exhaust your cores. You can read more on this [here](https://mathiashueber.com/performance-tweaks-gaming-on-virtual-machines/).
 
 #### Better SMT Performance (for AMD Ryzen CPUs)
-This is the configuration of the CPU for enabling SMT on the guest OS. This [should improve performance for AMD Ryzen CPUs](https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Improving_performance_on_AMD_CPUs):
-```sh
-  <cpu mode="host-passthrough" check="none" migratable="on">
-    <topology sockets="1" dies="1" cores="4" threads="2"/>
+This is the configuration of the CPU for enabling SMT on the guest OS. This [should improve performance for AMD Ryzen CPUs](https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Improving_performance_on_AMD_CPUs). To enable this, simply add the following line inside the *cpu* settings: 
+```
+   ...
+   <feature policy="require" name="topoext"/>
+   ...
+```
+This is how the *cpu* looks after adding the line
+```
+  <cpu mode="host-passthrough" check="none" >
+    <topology sockets="1" cores="4" threads="2"/>
     <cache mode="passthrough"/>
     <feature policy="require" name="topoext"/>
   </cpu>
-
 ```
 #### Disk Performance Tuning using virtio-blk/virtio-scsi
 [This post](https://mpolednik.github.io/2017/01/23/virtio-blk-vs-virtio-scsi/) explains the benefits of using either virtio-blk or virtio-scsi. I'm using virtio-blk for my emulated storage device. Using an actual physical disk should offer a way better experience than using emulated storage. I intend to get an extra SSD for this very purpose, but for now this does it: 
