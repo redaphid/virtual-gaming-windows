@@ -246,8 +246,95 @@ $ cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 ```
 The output should be the mode the CPU is running on i.e. "performance".
 
-[//]: # (These are reference links used in the body of this note and get stripped out when the markdown processor does its job. There is no need to format nicely because it shouldn't be seen. Thanks SO - http://stackoverflow.com/questions/4823468/store-comments-in-markdown-syntax)
+ ## VM Optimization Tweaks/Settings
+ These are additional settings on the VM for performance improvement. They are all available on [win10.xml](https://gitlab.com/Karuri/vfio/-/blob/master/win10.xml).
 
+#### CPU Pinning
+CPU pinning is an important step in optimizing CPU performance for VMs on multithreaded CPUs.
+
+The rule of the thumb is to pass to the virtual machine cores that are as close to each other as possible so as to minimize latency. When you passthrough a core you typically want to include its sibling. There isn't a one-size-fits-all solution here since the topology varies from CPU to CPU. You should **NOT** copy-paste a solution you found somewhere (this included) and then use it for your setup. The package *hwloc* can visually show you the topology of your CPU and go a long way in aiding you choose the right cores to pin. Simply run the following command once you have the pacakage installed
+```sh
+$ lstopo
+```
+This is the topology for my CPU:
+[![2020-09-10-02-27.png](https://i.postimg.cc/T35z2v38/2020-09-10-02-27.png)](https://postimg.cc/75DsXczX)
+
+To explain a little bit, I have 6 physical cores (Core L#0 to L#5) and 12 virtual cores (PU L#0 to PU L#11). The 6 physical cores are majorly split into groups of 3, each group sharing L3 (level 3) cache. The groups are core L#0 to L#2 and core L#3 to L#5. Each pair of virtual cores within the physical one are the *siblings* e.g. 
+- PU L#0 and PU L#1
+- PU L#2 and PU L#3
+- PU L#6 and PU L#7
+
+For my setup I'm passing through 4 physical cores (8 virtual cores). Following the topology of my CPU I decided to allocate all the virtual cores on the left side and one pair from the right. If instead I had a 8c/16t processor with the cores split 4-4 instead I would allocate the cores on one side only and not have to deal with the latency penalty of jumping from CCX to CCX. This would also have been the case if I was only passing through 3c/6t. Read more on CPU pinning [here](https://github.com/bryansteiner/gpu-passthrough-tutorial#----cpu-pinning).
+
+Here is my CPU pinning setup:
+```
+  ...
+  <vcpu placement="static">8</vcpu>
+  <iothreads>4</iothreads>
+  <cputune>
+    <vcpupin vcpu="0" cpuset="0"/>
+    <vcpupin vcpu="1" cpuset="1"/>
+    <vcpupin vcpu="2" cpuset="2"/>
+    <vcpupin vcpu="3" cpuset="3"/>
+    <vcpupin vcpu="4" cpuset="4"/>
+    <vcpupin vcpu="5" cpuset="5"/>
+    <vcpupin vcpu="6" cpuset="6"/>
+    <vcpupin vcpu="7" cpuset="7"/>
+    <emulatorpin cpuset="0,3"/>
+    <iothreadpin iothread="1" cpuset="0-1"/>
+    <iothreadpin iothread="2" cpuset="2-3"/>
+    <iothreadpin iothread="3" cpuset="4-5"/>
+    <iothreadpin iothread="4" cpuset="6-7"/>
+  </cputune>
+  ...
+```
+The *iothreads* element specifies the number of threads dedicated to performing block I/O. More information on this [here](https://libvirt.org/formatdomain.html#iothreads-allocation). This means that the other threads assigned to your VM can focus on handling whatever other tasks you are throwing at them instead of bothering themselves with I/O operations. The *iothreadpin* element specifies which of host physical CPUs the IOThreads will be pinned to. 
+
+#### Better SMT Performance (for AMD Ryzen CPUs)
+This is the configuration of the CPU for enabling SMT on the guest OS. This [should improve performance for AMD Ryzen CPUs](https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Improving_performance_on_AMD_CPUs):
+```sh
+  <cpu mode="host-passthrough" check="none" migratable="on">
+    <topology sockets="1" dies="1" cores="4" threads="2"/>
+    <cache mode="passthrough"/>
+    <feature policy="require" name="topoext"/>
+  </cpu>
+
+```
+#### Disk Performance Tuning using virtio-blk/virtio-scsi
+[This post](https://mpolednik.github.io/2017/01/23/virtio-blk-vs-virtio-scsi/) explains the benefits of using either virtio-blk or virtio-scsi. I'm using virtio-blk for my emulated storage device. Using an actual physical disk should offer a way better experience than using emulated storage. I intend to get an extra SSD for this very purpose, but for now this does it: 
+```
+    <disk type="file" device="disk">
+      <driver name="qemu" type="qcow2"/>
+      <source file="/media/HardDrive/VMs/win10.qcow2"/>
+      <target dev="vda" bus="virtio"/>
+      <boot order="1"/>
+      <address type="pci" domain="0x0000" bus="0x06" slot="0x00" function="0x0"/>
+    </disk>
+```
+
+#### Hyper-V Enlightenments
+I'm utilizing the following Hyper-V enlightments help the Guest OS handle the virtualization tasks. Documentation for what each feature does can be found [here](https://libvirt.org/formatdomain.html#elementsFeatures).
+```
+    ...
+    <hyperv>
+      <relaxed state="on"/>
+      <vapic state="on"/>
+      <spinlocks state="on" retries="8191"/>
+      <vpindex state="on"/>
+      <synic state="on"/>
+      <stimer state="on"/>
+      <reset state="on"/>
+      <vendor_id state="on" value="whatever_value"/>
+      <frequencies state="on"/>
+    </hyperv>
+    <kvm>
+      <hidden state="on"/>
+    </kvm>
+    ...
+```
+The *vendor_id* setting is for going around [the infamous Error 43 error on Nvidia GPUs](https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#%22Error_43:_Driver_failed_to_load%22_on_Nvidia_GPUs_passed_to_Windows_VMs). However, it may also fix some issues with AMD Radeon drivers from version 20.5.1 onwards. The purpose of the *kvm* section (right after the *hyperv* section) is to instruct the kvm to hide its state basically to cheat the guest OS into "thinking" it's on non-virtualized hardware. 
+
+[//]: # (References)
    [youtube-amd]: <https://www.youtube.com/watch?v=3BxAaaRDEEw>
    [main-wiki]: <https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Enabling_IOMMU>
    [level1-article]: <https://level1techs.com/article/ryzen-gpu-passthrough-setup-guide-fedora-26-windows-gaming-linux>
