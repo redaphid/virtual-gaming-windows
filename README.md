@@ -74,8 +74,10 @@ As noted earlier, this guide shall not cover how create a kvm/qemu VM. Refer to 
 
 **1. Use UEFI-enabled firmware for the VM:** 
 If using virt-manager you can check this under Overview --> Hypervisor Details --> Firmware. Choose UEFI x86_64: /usr/share/OVMF/OVMF_CODE.fd if available.
+
 **2. Pass the GPU and related devices:**
 If using virt-manager, click 'Add Hardware' and under 'PCI Host Device' select the bus ID of your GPU. Do the same for all the devices associated with your GPU (all the devices in the same IOMMU group as the GPU).
+
 **3. Patch NVIDIA BIOS (only for Pascal GPUs):**
 For Nvidia Pascal owners (GTX 10xx) you'll need to patch the GPU BIOS before the virtual machine can recognize it. To do so you'll first need the ROM for your GPU, which you can obtain in one of two ways:
 a. Dumping your current BIOS using a tool like [Nvidia nvflash](https://www.techpowerup.com/download/nvidia-nvflash/); or
