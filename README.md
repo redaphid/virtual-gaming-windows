@@ -50,6 +50,8 @@ As per the aforementioned wiki, adding amd_iommu=on to kernel parameters should 
 ```sh
 GRUB_CMDLINE_LINUX_DEFAULT="... iommu=1 amd_iommu=on rd.driver.pre=vfio-pc ..."
 ```
+For Intel CPUs passing intel_iommu=on should suffice.
+
 #### Checking IOMMU Groups
 If the conditions above are met, the next step is ensuring that we have some sane IOMMU groups.This is checking how various PCI devices are mapped to IOMMU groups. Run the script [check-iommu.sh](https://gitlab.com/Karuri/vfio/-/blob/master/check-iommu.sh) for this. 
 
@@ -65,7 +67,62 @@ IOMMU Group 13:
 ```
 I therefore must pass everything in IOMMU group 13 together to the VM i.e. the VGA controller (GPU), audio controller, USB controller and serial bus controller. The set of devices vary between graphics card. The typical scenario is usually two devices (GPU and audio controller) but more recent graphics card have more devices. Whatever your case us, take note of the bus addresses of all the devices within the same IOMMU group as your GPU. For me the bus addresses are 06:00.0 to 06:00.3.
 
-## 2.2: Passthrough Settings
+Note that the IOMMU group of your GPU should only contain devices connected to the GPU. If there is an unrelated device you'll have to figure out a way to split it into its own IOMMU groups. An [ACS override patch](https://queuecumber.gitlab.io/linux-acs-override/) will be necessary for this. Visit [this link](https://github.com/bryansteiner/gpu-passthrough-tutorial#----acs-override-patch-optional) for more information.
+
+## 2.2: Virtual Machine Settings
+As noted earlier, this guide shall not cover how create a kvm/qemu VM. Refer to [this guide](https://github.com/bryansteiner/gpu-passthrough-tutorial#----part-3-creating-the-vm) for these steps. However, there a few things you should pay attention to:
+
+**1. Use UEFI-enabled firmware for the VM:** 
+If using virt-manager you can check this under Overview --> Hypervisor Details --> Firmware. Choose UEFI x86_64: /usr/share/OVMF/OVMF_CODE.fd if available.
+**2. Pass the GPU and related devices:**
+If using virt-manager, click 'Add Hardware' and under 'PCI Host Device' select the bus ID of your GPU. Do the same for all the devices associated with your GPU (all the devices in the same IOMMU group as the GPU).
+**3. Patch NVIDIA BIOS (only for Pascal GPUs):**
+For Nvidia Pascal owners (GTX 10xx) you'll need to patch the GPU BIOS before the virtual machine can recognize it. To do so you'll first need the ROM for your GPU, which you can obtain in one of two ways:
+a. Dumping your current BIOS using a tool like [Nvidia nvflash](https://www.techpowerup.com/download/nvidia-nvflash/); or
+b. Downloading a user-submitted BIOS for your GPU model from [TechPowerUp](https://www.techpowerup.com/vgabios/).
+
+Next, clone the [NVIDIA vBIOS VFIO Patcher tool](https://github.com/Matoking/NVIDIA-vBIOS-VFIO-Patcher). The most important file here is *nvidia_vbios_vfio_patcher.py*. To create a patched BIOS for your Pascal GPU simply run the following command:
+```sh
+$ python nvidia_vbios_vfio_patcher.py -i <ORIGINAL_ROM> -o <PATCHED_ROM>
+```
+Where <ORIGINAL_ROM> is the original BIOS for your GPU and <PATCHED_ROM> is the patched ROM. They should of course be having different names. Finally, pass the patched copy of the vBIOS to libvirt so that the NVIDIA GPU can be used in the guest VM. Do so by adding the following line to the VM domain XML file.
+```
+   <hostdev>
+     ...
+     <rom file='/path/to/your/patched/gpu/bios.bin'/>
+     ...
+   </hostdev>
+```
+If you don't know how to access the VM's XML do so by going to Overview and opening the XML tab. To edit the XML you must go to Edit --> Preferences --> General and check "Enable XML Settings". If you instead prefer using a terminal editor run the following command:
+```sh
+$ sudo virsh edit win10
+```
+**4. Pass physical disk (if you have Windows 10 installed on a physical disk):**
+If you already have Windows 10 installed on a physical/raw media device you'll need to instruct the VM to use the physical disk instead of emulated storage. This involves editing the VM's XML in the *disk* section from:
+```
+...
+<disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2' cache='none'/>
+      <source file='/path/to/disk/image.qcow2'/>
+      <target dev='sda' bus='sata'/>
+      <address type='drive' controller='0' bus='0' target='0' unit='0'/>
+ </disk>
+ ...
+```
+To:
+```
+...
+<disk type='block' device='disk'>
+      <driver name='qemu' type='raw' />
+      <source dev='/dev/sda'/>
+      <target dev='vdb' bus='virtio'/>
+      <address type='drive' controller='0' bus='0' target='0' unit='0'/>
+ </disk>
+ ...
+```
+You should of course change */dev/sda* to the correct path to your storage device.
+
+## 2.3: Passthrough Settings
 ### Installing Hook Manager
 We'll be utilizing [libvirt hooks][libvirt-hooks] to dynamically bind the vfio drivers right before the VM starts and then unbinding these drivers right after the VM terminates. To set this up we'll be following [this article from the Passthrough Post.][passthrough-post]
 
@@ -416,6 +473,19 @@ I'm utilizing the following Hyper-V enlightments help the Guest OS handle the vi
     ...
 ```
 The *vendor_id* setting is for going around [the infamous Error 43 error on Nvidia GPUs](https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#%22Error_43:_Driver_failed_to_load%22_on_Nvidia_GPUs_passed_to_Windows_VMs). However, it may also fix some issues with AMD Radeon drivers from version 20.5.1 onwards. The purpose of the *kvm* section (right after the *hyperv* section) is to instruct the kvm to hide its state basically to cheat the guest OS into "thinking" it's on non-virtualized hardware. 
+
+## Credits:
+1. The Arch Wiki for instructions on [how to enable PCI passthrough via OVMF](https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF).
+2. Wendell from Level1Techs for [the Ryzen GPU Passthrough Setup Guide](https://level1techs.com/article/ryzen-gpu-passthrough-setup-guide-fedora-26-windows-gaming-linux).
+3. Bryansteiner (GitHub) for the [GPU passthrough tutorial](https://github.com/bryansteiner/gpu-passthrough-tutorial#considerations).
+4. Joeknock90 (Github) for the [single GPU passthrough tutorial](https://github.com/joeknock90/Single-GPU-Passthrough)
+5. Mathias Hueber (MathiasHueber.com) for [tips on performance tuning](https://mathiashueber.com/performance-tweaks-gaming-on-virtual-machines/).
+6. Risingprismtv (YouTube) for his [video guide on single GPU passthrough for AMD GPUs](https://www.youtube.com/watch?v=3BxAaaRDEEw).
+7. Matoking (GitHub) for the [NVIDIA vBIOS Patcher tool](https://github.com/Matoking/NVIDIA-vBIOS-VFIO-Patcher).
+8. Reddit user *jibbyjobo* for pointing me to the [CPU Pinning Helper](https://passthroughtools.org/cpupin/).
+
+### Enquiries:
+If you need help on this subject matter feel free to reach me on Reddit, username *Danc1ngRasta*. Make sure to follow what is the guide exhaustively before reaching out. 
 
 [//]: # (References)
    [youtube-amd]: <https://www.youtube.com/watch?v=3BxAaaRDEEw>
