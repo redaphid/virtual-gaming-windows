@@ -425,8 +425,8 @@ Before the *cputune* element add an *iothreads* element. Inside the *cpuelement*
 ```
 Be careful with this section as you can easily hurt your guest's performance. A safe bet would be not to exhaust your cores. You can read more on this [here](https://mathiashueber.com/performance-tweaks-gaming-on-virtual-machines/).
 
-#### Better SMT Performance (for AMD Ryzen CPUs)
-This is the configuration of the CPU for enabling SMT on the guest OS. This [should improve performance for AMD Ryzen CPUs](https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Improving_performance_on_AMD_CPUs). To enable this, simply add the following line inside the *cpu* settings: 
+#### Enabling SMT Performance (for AMD Ryzen CPUs)
+This [should improve performance for AMD Ryzen CPUs](https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Improving_performance_on_AMD_CPUs). To enable SMT, simply add the following line inside the *cpu* settings: 
 ```
    ...
    <feature policy="require" name="topoext"/>
