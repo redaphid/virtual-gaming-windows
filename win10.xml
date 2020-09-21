@@ -12,19 +12,18 @@
     <hugepages/>
   </memoryBacking>
   <vcpu placement="static">8</vcpu>
-  <iothreads>2</iothreads>
+  <iothreads>1</iothreads>
   <cputune>
-    <vcpupin vcpu="0" cpuset="0"/>
-    <vcpupin vcpu="1" cpuset="6"/>
-    <vcpupin vcpu="2" cpuset="1"/>
-    <vcpupin vcpu="3" cpuset="7"/>
-    <vcpupin vcpu="4" cpuset="2"/>
-    <vcpupin vcpu="5" cpuset="8"/>
-    <vcpupin vcpu="6" cpuset="3"/>
-    <vcpupin vcpu="7" cpuset="9"/>
-    <emulatorpin cpuset='5-6'/>
-    <iothreadpin iothread="1" cpuset="4-10"/>
-    <iothreadpin iothread="2" cpuset="5-11"/>
+    <vcpupin vcpu="0" cpuset="2"/>
+    <vcpupin vcpu="1" cpuset="8"/>
+    <vcpupin vcpu="2" cpuset="3"/>
+    <vcpupin vcpu="3" cpuset="9"/>
+    <vcpupin vcpu="4" cpuset="4"/>
+    <vcpupin vcpu="5" cpuset="10"/>
+    <vcpupin vcpu="6" cpuset="5"/>
+    <vcpupin vcpu="7" cpuset="11"/>
+    <emulatorpin cpuset="1"/>
+    <iothreadpin iothread="1" cpuset="1-7"/>
   </cputune>
   <os>
     <type arch="x86_64" machine="pc-q35-5.1">hvm</type>
@@ -52,8 +51,8 @@
     <smm state="on"/>
     <ioapic driver="kvm"/>
   </features>
-  <cpu mode="host-passthrough" check="none">
-    <topology sockets="1" cores="4" threads="2"/>
+  <cpu mode="host-passthrough" check="none" migratable="on">
+    <topology sockets="1" dies="1" cores="4" threads="2"/>
     <cache mode="passthrough"/>
     <feature policy="require" name="topoext"/>
   </cpu>
