@@ -8,7 +8,7 @@
   </metadata>
   <memory unit="KiB">32768000</memory>
   <currentMemory unit="KiB">32768000</currentMemory>
-  <vcpu placement="static" current="16">24</vcpu>
+  <vcpu placement="static">8</vcpu>
   <iothreads>2</iothreads>
   <os>
     <type arch="x86_64" machine="pc-i440fx-4.2">hvm</type>
@@ -36,7 +36,7 @@
     <vmport state="off"/>
   </features>
   <cpu mode="host-passthrough" check="none">
-    <topology sockets="1" cores="24" threads="1"/>
+    <topology sockets="1" cores="8" threads="1"/>
     <feature policy="disable" name="smep"/>
   </cpu>
   <clock offset="localtime">
@@ -54,12 +54,6 @@
   </pm>
   <devices>
     <emulator>/usr/bin/qemu-system-x86_64</emulator>
-    <disk type="file" device="cdrom">
-      <driver name="qemu" type="raw"/>
-      <target dev="sda" bus="sata"/>
-      <readonly/>
-      <address type="drive" controller="0" bus="0" target="0" unit="0"/>
-    </disk>
     <disk type="block" device="disk">
       <driver name="qemu" type="raw" cache="none" io="native"/>
       <source dev="/dev/nvme0n1"/>
@@ -75,9 +69,6 @@
     </controller>
     <controller type="virtio-serial" index="0">
       <address type="pci" domain="0x0000" bus="0x00" slot="0x07" function="0x0"/>
-    </controller>
-    <controller type="ide" index="0">
-      <address type="pci" domain="0x0000" bus="0x00" slot="0x01" function="0x1"/>
     </controller>
     <serial type="pty">
       <target type="isa-serial" port="0">

@@ -1,0 +1,23 @@
+kernelstub.Config    : INFO     Looking for configuration...
+kernelstub           : INFO     System information: 
+
+    OS:..................Pop!_OS 20.04
+    Root partition:....../dev/nvme1n1p2
+    Root FS UUID:........283a2051-c8de-445a-88ac-cbfb81b06905
+    ESP Path:............/boot/efi
+    ESP Partition:......./dev/nvme1n1p1
+    ESP Partition #:.....1
+    NVRAM entry #:.......-1
+    Boot Variable #:.....0000
+    Kernel Boot Options:.quiet loglevel=0 systemd.show_status=false splash amd_iommu=on iommu=pt kvm.ignore_msrs=1 vfio-pci.ids=10de:1b81,10de:10f0
+    Kernel Image Path:.../boot/vmlinuz-5.11.0-7614-generic
+    Initrd Image Path:.../boot/initrd.img-5.11.0-7614-generic
+    Force-overwrite:.....False
+
+kernelstub           : INFO     Configuration details: 
+
+   ESP Location:................../boot/efi
+   Management Mode:...............True
+   Install Loader configuration:..True
+   Configuration version:.........3
+
