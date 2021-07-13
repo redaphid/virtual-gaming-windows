@@ -54,11 +54,11 @@
   </pm>
   <devices>
     <emulator>/usr/bin/qemu-system-x86_64</emulator>
-    <disk type="block" device="disk">
-      <driver name="qemu" type="raw" cache="none" io="native"/>
-      <source dev="/dev/nvme0n1"/>
-      <target dev="sdb" bus="sata"/>
-      <address type="drive" controller="0" bus="0" target="0" unit="1"/>
+    <disk type="file" device="disk">
+      <driver name="qemu" type="raw"/>
+      <source file="/big/vm/nx.img"/>
+      <target dev="sda" bus="sata"/>
+      <address type="drive" controller="0" bus="0" target="0" unit="0"/>
     </disk>
     <controller type="usb" index="0" model="qemu-xhci" ports="15">
       <address type="pci" domain="0x0000" bus="0x00" slot="0x05" function="0x0"/>
@@ -70,14 +70,6 @@
     <controller type="virtio-serial" index="0">
       <address type="pci" domain="0x0000" bus="0x00" slot="0x07" function="0x0"/>
     </controller>
-    <serial type="pty">
-      <target type="isa-serial" port="0">
-        <model name="isa-serial"/>
-      </target>
-    </serial>
-    <console type="pty">
-      <target type="serial" port="0"/>
-    </console>
     <input type="mouse" bus="ps2"/>
     <input type="keyboard" bus="ps2"/>
     <input type="mouse" bus="usb">
@@ -85,15 +77,33 @@
     </input>
     <hostdev mode="subsystem" type="pci" managed="yes">
       <source>
-        <address domain="0x0000" bus="0x0b" slot="0x00" function="0x0"/>
+        <address domain="0x0000" bus="0x07" slot="0x00" function="0x0"/>
+      </source>
+      <address type="pci" domain="0x0000" bus="0x00" slot="0x08" function="0x0"/>
+    </hostdev>
+    <hostdev mode="subsystem" type="pci" managed="yes">
+      <source>
+        <address domain="0x0000" bus="0x00" slot="0x07" function="0x0"/>
+      </source>
+      <address type="pci" domain="0x0000" bus="0x00" slot="0x04" function="0x0"/>
+    </hostdev>
+    <hostdev mode="subsystem" type="pci" managed="yes">
+      <source>
+        <address domain="0x0000" bus="0x0a" slot="0x00" function="0x0"/>
       </source>
       <address type="pci" domain="0x0000" bus="0x00" slot="0x02" function="0x0"/>
     </hostdev>
     <hostdev mode="subsystem" type="pci" managed="yes">
       <source>
-        <address domain="0x0000" bus="0x0b" slot="0x00" function="0x1"/>
+        <address domain="0x0000" bus="0x0a" slot="0x00" function="0x1"/>
       </source>
       <address type="pci" domain="0x0000" bus="0x00" slot="0x03" function="0x0"/>
+    </hostdev>
+    <hostdev mode="subsystem" type="pci" managed="yes">
+      <source>
+        <address domain="0x0000" bus="0x06" slot="0x00" function="0x1"/>
+      </source>
+      <address type="pci" domain="0x0000" bus="0x00" slot="0x0b" function="0x0"/>
     </hostdev>
     <hostdev mode="subsystem" type="pci" managed="yes">
       <source>
@@ -103,25 +113,10 @@
     </hostdev>
     <hostdev mode="subsystem" type="pci" managed="yes">
       <source>
-        <address domain="0x0000" bus="0x07" slot="0x00" function="0x1"/>
+        <address domain="0x0000" bus="0x06" slot="0x00" function="0x3"/>
       </source>
-      <address type="pci" domain="0x0000" bus="0x00" slot="0x04" function="0x0"/>
+      <address type="pci" domain="0x0000" bus="0x00" slot="0x0c" function="0x0"/>
     </hostdev>
-    <hostdev mode="subsystem" type="pci" managed="yes">
-      <source>
-        <address domain="0x0000" bus="0x07" slot="0x00" function="0x0"/>
-      </source>
-      <address type="pci" domain="0x0000" bus="0x00" slot="0x08" function="0x0"/>
-    </hostdev>
-    <hostdev mode="subsystem" type="pci" managed="yes">
-      <source>
-        <address domain="0x0000" bus="0x07" slot="0x00" function="0x3"/>
-      </source>
-      <address type="pci" domain="0x0000" bus="0x00" slot="0x0b" function="0x0"/>
-    </hostdev>
-    <redirdev bus="usb" type="spicevmc">
-      <address type="usb" bus="0" port="1"/>
-    </redirdev>
     <memballoon model="virtio">
       <address type="pci" domain="0x0000" bus="0x00" slot="0x0a" function="0x0"/>
     </memballoon>
