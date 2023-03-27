@@ -64,7 +64,13 @@ cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
     <cache mode='passthrough'/>
   </cpu>
 ```
-## 7 [Boot and Kernel Parameters](https://angrysysadmins.tech/index.php/2022/07/grassyloki/vfio-tuning-your-windows-gaming-vm-for-optimal-performance#host-config)
+## 7 [Re-Enable Hyperthreading](https://www.reddit.com/r/VFIO/comments/sp2n2a/poor_gaming_performance_with_low_gpu_usage/)
+### REMOVE THIS LINE:
+```xml
+<feature policy="disable" name="hypervisor"/>
+```
+
+## 8 [Boot and Kernel Parameters](https://angrysysadmins.tech/index.php/2022/07/grassyloki/vfio-tuning-your-windows-gaming-vm-for-optimal-performance#host-config)
 ```bash
 #!/usr/bin/env fish
 cat /proc/cmdline
