@@ -6,6 +6,7 @@
 |  2     |  7280        | 660      | 1296      | 2561      | 4626      | 7656       |
 |  3     |  8051        | 663      | 1313      | 2575      | 4817      | 8051       |
 |  4     |  7110        | 660      | 1301      | 2554      | 4477      | 7025       |
+|  5     |  8228        | 661      | 1333      | 2642      | 4835      | 8278       |
 
 ## 1 - Original CPU Topology
 ```xml
@@ -54,5 +55,11 @@ cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
     <iothreadpin iothread='1' cpuset='0-1'/>
     <iothreadpin iothread='2' cpuset='2-3'/>
  </cputune>
+```
+## 6 Boot and Kernel Parameters
+```bash
+#!/usr/bin/env fish
+cat /proc/cmdline
+kernelstub -a "intel_iommu=on iommu=pt isolcpus=8-15"
 ```
 
