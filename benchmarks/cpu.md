@@ -74,6 +74,6 @@ cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 ```bash
 #!/usr/bin/env fish
 cat /proc/cmdline
-kernelstub -a "vfio_iommu_type1.allow_unsafe_interrupts=1 kvm.ignore_msrs=1 intel_iommu=on iommu=pt intel_iommu=igfx_off"
+kernelstub -a "vfio_iommu_type1.allow_unsafe_interrupts=1 kvm.ignore_msrs=1"
 ```
 
