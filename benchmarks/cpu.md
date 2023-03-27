@@ -6,7 +6,7 @@
 |  2     |  7280        | 660      | 1296      | 2561      | 4626      | 7656       |
 |  3     |  8051        | 663      | 1313      | 2575      | 4817      | 8051       |
 
-## 1
+## 1 - Original CPU Topology
 ```xml
   <cpu mode='host-passthrough' check='none' migratable='on'>
     <topology sockets='2' dies='1' cores='8' threads='1'/>
@@ -14,7 +14,7 @@
     <feature policy='disable' name='hypervisor'/>
   </cpu>
 ```
-## 2
+## 2 - New CPU Topology
 ```xml
   <cpu mode="host-passthrough" check="none" migratable="on">
     <topology sockets="1" dies="1" cores="8" threads="2"/>
