@@ -31,3 +31,5 @@ for file in (ls /sys/devices/system/cpu/*/cpufreq/scaling_governor)
 end
 cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 ```
+
+## 4 - [topoext](https://mathiashueber.com/performance-tweaks-gaming-on-virtual-machines#ib-toc-anchor-9)
