@@ -22,3 +22,12 @@
     <feature policy="disable" name="hypervisor"/>
   </cpu>
 ```
+## 3 - [CPU Governor](https://mathiashueber.com/performance-tweaks-gaming-on-virtual-machines/#ib-toc-anchor-5)
+```bash
+#!/usr/bin/env fish
+cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+for file in (ls /sys/devices/system/cpu/*/cpufreq/scaling_governor)
+  echo  "performance" > $file
+end
+cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+```
