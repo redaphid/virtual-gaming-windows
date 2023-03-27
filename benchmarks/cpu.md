@@ -33,4 +33,26 @@ end
 cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 ```
 
-## 4 - [topoext](https://mathiashueber.com/performance-tweaks-gaming-on-virtual-machines#ib-toc-anchor-9)
+~~## 4 - [topoext](https://mathiashueber.com/performance-tweaks-gaming-on-virtual-machines#ib-toc-anchor-9)~~
+
+## 5 CPU Pinning
+```xml
+  <domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
+  <!-- later, in the <vcpu> element -->
+<vcpu placement='static'>8</vcpu>
+<iothreads>2</iothreads>
+<cputune>
+    <vcpupin vcpu='0' cpuset='8'/>
+    <vcpupin vcpu='1' cpuset='9'/>
+    <vcpupin vcpu='2' cpuset='10'/>
+    <vcpupin vcpu='3' cpuset='11'/>
+    <vcpupin vcpu='4' cpuset='12'/>
+    <vcpupin vcpu='5' cpuset='13'/>
+    <vcpupin vcpu='6' cpuset='14'/>
+    <vcpupin vcpu='7' cpuset='15'/>
+    <emulatorpin cpuset='0-1'/>
+    <iothreadpin iothread='1' cpuset='0-1'/>
+    <iothreadpin iothread='2' cpuset='2-3'/>
+ </cputune>
+```
+
