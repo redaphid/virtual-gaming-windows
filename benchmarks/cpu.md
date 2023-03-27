@@ -57,10 +57,17 @@ cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
     <iothreadpin iothread='2' cpuset='2-3'/>
  </cputune>
 ```
-## 6 [Boot and Kernel Parameters](https://angrysysadmins.tech/index.php/2022/07/grassyloki/vfio-tuning-your-windows-gaming-vm-for-optimal-performance#host-config)
+
+## 6 [CPU Cache Passthrough](https://mathiashueber.com/performance-tweaks-gaming-on-virtual-machines#ib-toc-anchor-10)
+```xml
+  <cpu mode='host-passthrough' check='none' migratable='on'>
+    <cache mode='passthrough'/>
+  </cpu>
+```
+## 7 [Boot and Kernel Parameters](https://angrysysadmins.tech/index.php/2022/07/grassyloki/vfio-tuning-your-windows-gaming-vm-for-optimal-performance#host-config)
 ```bash
 #!/usr/bin/env fish
 cat /proc/cmdline
-kernelstub -a "vfio_iommu_type1.allow_unsafe_interrupts=1 kvm.ignore_msrs=1 isolatecpu=8-15 intel_iommu=on iommu=pt intel_iommu=igfx_off"
+kernelstub -a "vfio_iommu_type1.allow_unsafe_interrupts=1 kvm.ignore_msrs=1 intel_iommu=on iommu=pt intel_iommu=igfx_off"
 ```
 
