@@ -23,7 +23,7 @@
     <feature policy="disable" name="hypervisor"/>
   </cpu>
 ```
-## 3 - [CPU Governor](https://mathiashueber.com/performance-tweaks-gaming-on-virtual-machines/#ib-toc-anchor-5)
+## 3 - [CPU Governor](https://mathiashueber.com/performance-tweaks-gaming-on-virtual-machines#ib-toc-anchor-5)
 ```bash
 #!/usr/bin/env fish
 cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
@@ -35,7 +35,7 @@ cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 
 ~~## 4 - [topoext](https://mathiashueber.com/performance-tweaks-gaming-on-virtual-machines#ib-toc-anchor-9)~~
 
-## 5 CPU Pinning
+## 5 [CPU Pinning](https://mathiashueber.com/performance-tweaks-gaming-on-virtual-machines#ib-toc-anchor-8)
 ```xml
   <domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
   <!-- later, in the <vcpu> element -->
