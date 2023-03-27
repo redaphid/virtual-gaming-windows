@@ -7,6 +7,7 @@
 |  3     |  8051        | 663      | 1313      | 2575      | 4817      | 8051       |
 |  4     |  7110        | 660      | 1301      | 2554      | 4477      | 7025       |
 |  5     |  8228        | 661      | 1333      | 2642      | 4835      | 8278       |
+|  5     |  8904        | 666      | 1328      | 2610      | 4779      | 8904       |
 
 ## 1 - Original CPU Topology
 ```xml
@@ -56,10 +57,10 @@ cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
     <iothreadpin iothread='2' cpuset='2-3'/>
  </cputune>
 ```
-## 6 Boot and Kernel Parameters
+## 6 [Boot and Kernel Parameters](https://angrysysadmins.tech/index.php/2022/07/grassyloki/vfio-tuning-your-windows-gaming-vm-for-optimal-performance#host-config)
 ```bash
 #!/usr/bin/env fish
 cat /proc/cmdline
-kernelstub -a "vfio_iommu_type1.allow_unsafe_interrupts=1 kvm.ignore_msrs=1"
+kernelstub -a "vfio_iommu_type1.allow_unsafe_interrupts=1 kvm.ignore_msrs=1 isolatecpu=8-15 intel_iommu=on iommu=pt intel_iommu=igfx_off"
 ```
 
