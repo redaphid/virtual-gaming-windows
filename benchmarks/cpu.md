@@ -60,6 +60,6 @@ cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 ```bash
 #!/usr/bin/env fish
 cat /proc/cmdline
-kernelstub -a "intel_iommu=on iommu=pt isolcpus=8-15"
+kernelstub -a "vfio_iommu_type1.allow_unsafe_interrupts=1 kvm.ignore_msrs=1"
 ```
 
