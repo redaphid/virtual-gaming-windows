@@ -8,6 +8,7 @@
   </metadata>
   <memory unit="KiB">20480000</memory>
   <currentMemory unit="KiB">20480000</currentMemory>
+  <vcpu placement="static">16</vcpu>
   <resource>
     <partition>/machine</partition>
   </resource>
@@ -57,6 +58,12 @@
     </kvm>
     <vmport state="off"/>
   </features>
+  <cpu mode="host-passthrough" check="none" migratable="on">
+    <topology sockets="1" dies="1" cores="8" threads="2"/>
+    <cache mode="passthrough"/>
+    <feature policy="disable" name="smep"/>
+    <feature policy="require" name="topoext"/>
+  </cpu>
   <clock offset="localtime">
     <timer name="rtc" tickpolicy="catchup"/>
     <timer name="pit" tickpolicy="delay"/>
@@ -198,16 +205,4 @@
     </shmem>
   </devices>
   <seclabel type="dynamic" model="dac" relabel="yes"/>
-  <!-- gaming vm performance tweaks -->
-  <!-- cpu stuff -->
-  <vcpu placement="static">16</vcpu>
-  <cpu mode="host-passthrough" check="none" migratable="on">
-    <topology sockets="1" dies="1" cores="8" threads="2"/>
-    <cache mode="passthrough"/>
-    <feature policy="require" name="topoext"/>
-  </cpu>
-  <memoryBacking>
-    <hugepages/>
-  </memoryBacking>
-  <iothreads>2</iothreads>
 </domain>
