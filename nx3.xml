@@ -194,11 +194,6 @@
       <address type="pci" domain="0x0000" bus="0x09" slot="0x00" function="0x0"/>
     </hostdev>
     <memballoon model="none"/>
-    <shmem name="looking-glass">
-      <model type="ivshmem-plain"/>
-      <size unit="M">256</size>
-      <address type="pci" domain="0x0000" bus="0x07" slot="0x01" function="0x0"/>
-    </shmem>
   </devices>
   <seclabel type="dynamic" model="dac" relabel="yes"/>
   <seclabel type="dynamic" model="apparmor" relabel="yes"/>
