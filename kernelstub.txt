@@ -1,0 +1,23 @@
+kernelstub.Config    : INFO     Looking for configuration...
+kernelstub           : INFO     System information: 
+
+    OS:..................Pop!_OS 22.04
+    Root partition:....../dev/sdc3
+    Root FS UUID:........084151ca-1d2a-44fd-a7e4-9d7ab1f12a4a
+    ESP Path:............/boot/efi
+    ESP Partition:......./dev/sdc1
+    ESP Partition #:.....1
+    NVRAM entry #:.......-1
+    Boot Variable #:.....0000
+    Kernel Boot Options:.quiet loglevel=0 systemd.show_status=false splash amd_iommu=on iommu=1 vfio-pci.ids=10de:228b,10de:2484 vfio-pci ids=10de:228b,10de:2484 initcall_blacklist=sysfb_init
+    Kernel Image Path:.../boot/vmlinuz-6.2.6-76060206-generic
+    Initrd Image Path:.../boot/initrd.img-6.2.6-76060206-generic
+    Force-overwrite:.....False
+
+kernelstub           : INFO     Configuration details: 
+
+   ESP Location:................../boot/efi
+   Management Mode:...............True
+   Install Loader configuration:..True
+   Configuration version:.........3
+
